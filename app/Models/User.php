@@ -44,4 +44,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function subdomain()
+    {
+        return $this->hasOne(Subdomain::class);
+    }
 }

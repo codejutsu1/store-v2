@@ -2,16 +2,21 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\SubdomainResource\Pages;
-use App\Filament\Resources\SubdomainResource\RelationManagers;
-use App\Models\Subdomain;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
+use App\Models\Subdomain;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Wizard;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\SubdomainResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\SubdomainResource\RelationManagers;
 
 class SubdomainResource extends Resource
 {
@@ -29,7 +34,23 @@ class SubdomainResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Wizard::make([
+                    Wizard\Step::make('Subdomain Name')
+                            ->description('A unique name for your store.')
+                            ->completedIcon('heroicon-m-hand-thumb-up')
+                            ->schema([
+                                TextInput::make('name')
+                                        ->required()
+                                        ->unique(Subdomain::class, 'name', fn ($record) => $record),
+                            ]),
+                    Wizard\Step::make('Description')
+                            ->description('A short summary.')
+                            ->completedIcon('heroicon-m-hand-thumb-up')
+                            ->schema([
+                                TextInput::make('description')
+                                        ->required()
+                            ]),
+                ])->columnspan('full'),
             ]);
     }
 
@@ -37,7 +58,10 @@ class SubdomainResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('name'),
+                TextColumn::make('description'),
+                ToggleColumn::make('is_visible'),
+                            
             ])
             ->filters([
                 //

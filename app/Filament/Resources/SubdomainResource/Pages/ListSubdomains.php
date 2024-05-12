@@ -12,8 +12,12 @@ class ListSubdomains extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        if(!Auth()->user()->subdomain->exists()){
+            return [
+                Actions\CreateAction::make(),
+            ];
+        }
+
+        return [];
     }
 }
