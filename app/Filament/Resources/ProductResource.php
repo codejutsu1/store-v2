@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Models\Tag;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
@@ -96,16 +97,17 @@ class ProductResource extends Resource
                                     ]),
                             Section::make('Tags')
                                     ->schema([
-                                        TagsInput::make('tags')
+                                        Select::make('tags')
+                                                ->multiple()
+                                                ->relationship(titleAttribute:'name')
+                                                ->searchable()
+                                                ->preload()
+                                                ->required(),
+
+                                        TagsInput::make('extra_tags')
+                                                ->label('Extra Tags')
                                                 ->separator(',')
                                                 ->helperText('Click Enter after inputting your tag,')
-                                                ->suggestions([
-                                                    'Beauty and Cosmetic',
-                                                    'Electrical and Electronics',
-                                                    'Food',
-                                                    'Beverages',
-                                                ])
-                                                ->required(),
                                     ]),
                         ])->columnSpan(['lg' => 1]),
             ])->columns(3);
