@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Product extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'category_id',
+        'slug',
+        'price',
+        'image',
+        'description',
+        'discount',
+        'quantity',
+        'unit',
+        'weight',
+        'is_visible',
+        'is_approved',
+    ];
+
+    protected $casts = [
+        'price' => MoneyCast::class,
+        'discount' => MoneyCast::class
+    ];
 
     public function category(): BelongsTo
     {

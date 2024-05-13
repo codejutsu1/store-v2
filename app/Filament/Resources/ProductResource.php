@@ -6,16 +6,22 @@ use App\Models\Tag;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
+use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Section;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\ProductResource\Pages;
@@ -26,7 +32,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
     protected static ?int $navigationSort = 3;
 
@@ -42,9 +48,12 @@ class ProductResource extends Resource
                                 ->schema([
                                     TextInput::make('name')
                                             ->label('Name of Product')
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state)))
                                             ->required(),
                                     TextInput::make('slug')
                                             ->label('Product Slug')
+                                            ->readOnly()
                                             ->required(),
                                     MarkdownEditor::make('description')
                                                 ->label('A short description of your product.')
@@ -63,18 +72,49 @@ class ProductResource extends Resource
                         Section::make('Pricing')
                                     ->schema([
                                         TextInput::make('price')
+                                                ->prefix('₦')
                                                 ->numeric()
+                                                ->minValue(1)
                                                 ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/'])
                                                 ->required(),
 
                                         TextInput::make('cost')
                                                 ->label('Cost per item')
+                                                ->prefix('₦')
+                                                ->minValue(1)
                                                 ->helperText('Customers won\'t see this price.')
                                                 ->numeric()
+                                                ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/']),
+
+                                        TextInput::make('discount')
+                                                ->label('Discount Price')
+                                                ->minValue(1)
+                                                ->numeric()
+                                                ->prefix('₦')
                                                 ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/'])
-                                                ->required(),
 
 
+                                    ])->columns(2),
+
+                        Section::make('Attributes')
+                                    ->schema([
+                                        TextInput::make('quantity')
+                                            ->label('Quantity of products in stock.')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->required(),
+
+                                        TextInput::make('weight')
+                                            ->label('Measurement of Product.')
+                                            ->numeric()
+                                            ->minValue(1),
+
+                                        Select::make('unit')
+                                            ->options([
+                                                'kg' => 'Kilogram (Kg)',
+                                                'ltr' => 'Litre (ltr)',
+                                                'g' => 'Gram (g)',
+                                            ]),
                                     ])->columns(2),
                     ])->columnSpan(['lg' => 2]),
 
@@ -89,8 +129,8 @@ class ProductResource extends Resource
                                     ]),
                             Section::make('Association')
                                     ->schema([
-                                        Select::make('categories')
-                                                ->relationship('category', 'name')
+                                        Select::make('category_id')
+                                                ->relationship(name: 'category', titleAttribute:'name')
                                                 ->searchable()
                                                 ->preload()
                                                 ->required(),
@@ -117,7 +157,43 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                //
+                ImageColumn::make('image'),
+                TextColumn::make('name')
+                            ->sortable()
+                            ->searchable(),
+                TextColumn::make('category.name')
+                            ->sortable()
+                            ->searchable(),
+                TextColumn::make('slug')
+                            ->toggleable()
+                            ->sortable()
+                            ->toggledHiddenByDefault(),
+                TextColumn::make('price')
+                            ->prefix('₦')
+                            ->sortable(),
+                TextColumn::make('discount')
+                            ->prefix('₦')
+                            ->sortable()
+                            ->toggleable()
+                            ->toggledHiddenByDefault(),
+                TextColumn::make('quantity')
+                            ->toggleable()
+                            ->toggledHiddenByDefault(),
+                SelectColumn::make('unit')
+                            ->options([
+                                'kg' => 'Kilogram (Kg)',
+                                'ltr' => 'Litre (ltr)',
+                                'g' => 'Gram (g)',
+                            ])
+                            ->toggleable()
+                            ->toggledHiddenByDefault()
+                            ->rules(['required']),
+                IconColumn::make('is_visible')
+                            ->label('Visibility')
+                            ->boolean(),
+                TextColumn::make('created_at')
+                            ->label('Created')
+                            ->since(),
             ])
             ->filters([
                 //

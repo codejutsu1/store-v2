@@ -60,7 +60,8 @@ class CategoryResource extends Resource
                     ]),
                     Section::make([
                         Toggle::make('is_visible')
-                                ->label('Visibility'),
+                                ->label('Visibility')
+                                ->default(true),
                     ])->grow(false),
                 ])->from('md')->columnspan('full'),
             ]);

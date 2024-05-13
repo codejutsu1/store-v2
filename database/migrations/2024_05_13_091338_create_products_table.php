@@ -25,6 +25,7 @@ return new class extends Migration
             $table->integer('weight')->nullable();
             $table->boolean('is_visible')->default(1);
             $table->boolean('is_approved')->default(1);
+            $table->string('extra_tags')->nullable();
             $table->timestamps();
         });
     }

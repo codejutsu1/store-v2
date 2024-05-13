@@ -30,5 +30,4 @@ class CreateSubdomain extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-
 }
