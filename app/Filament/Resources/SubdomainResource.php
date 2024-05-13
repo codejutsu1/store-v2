@@ -41,6 +41,7 @@ class SubdomainResource extends Resource
                             ->schema([
                                 TextInput::make('name')
                                         ->required()
+                                        ->suffixIcon('heroicon-m-globe-alt')
                                         ->unique(Subdomain::class, 'name', fn ($record) => $record),
                             ]),
                     Wizard\Step::make('Description')

@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\SubdomainResource\Pages;
 
-use App\Filament\Resources\SubdomainResource;
 use Filament\Actions;
+use Filament\Tables\Table;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\SubdomainResource;
 
 class ListSubdomains extends ListRecords
 {

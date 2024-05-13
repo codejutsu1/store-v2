@@ -2,16 +2,27 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CategoryResource\Pages;
-use App\Filament\Resources\CategoryResource\RelationManagers;
-use App\Models\Category;
+use Closure;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Set;
+use App\Models\Category;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Split;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Fieldset;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\CategoryResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\CategoryResource\RelationManagers;
 
 class CategoryResource extends Resource
 {
@@ -27,7 +38,31 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Split::make([
+                    Section::make([
+                        TextInput::make('name')
+                                    ->rules([
+                                        fn (): Closure => function (string $attribute, $value, Closure $fail) {
+                                            $response = Category::query()->subdomain()->pluck('name')->contains($value);
+                                            if ($response) {
+                                                $fail('The :attribute already exist.');
+                                            }
+                                        },
+                                    ])
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state)))
+                                    ->required(),
+                        TextInput::make('slug')
+                                ->readOnly()
+                                ->required(),
+                        Select::make('subdomain_id')
+                                ->relationship(name: 'subdomain', titleAttribute: 'name'),
+                    ]),
+                    Section::make([
+                        Toggle::make('is_visible')
+                                ->label('Visibility'),
+                    ])->grow(false),
+                ])->from('md')->columnspan('full'),
             ]);
     }
 
@@ -35,12 +70,17 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('name'),
+                TextColumn::make('slug'),
+                TextColumn::make('link'),
+                ToggleColumn::make('is_visible')
+                            ->label('Visibility'),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
