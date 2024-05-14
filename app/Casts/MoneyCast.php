@@ -14,7 +14,7 @@ class MoneyCast implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        return number_format(round(floatval($value) / 100, precision: 2),2);
+        return round(floatval($value) / 100, precision: 2);
     }
 
     /**

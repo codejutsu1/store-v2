@@ -25,11 +25,15 @@ class Product extends Model
         'weight',
         'is_visible',
         'is_approved',
+        'extra_tags',
+        'extra_images'
     ];
 
     protected $casts = [
         'price' => MoneyCast::class,
-        'discount' => MoneyCast::class
+        'discount' => MoneyCast::class,
+        'extra_tags' => 'array',
+        'extra_images' => 'array'
     ];
 
     public function category(): BelongsTo

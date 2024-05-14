@@ -20,12 +20,14 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('description')->nullable();
             $table->integer('discount')->nullable();
+            $table->integer('cost')->nullable();
             $table->integer('quantity')->nullable();
             $table->string('unit')->nullable();
             $table->integer('weight')->nullable();
             $table->boolean('is_visible')->default(1);
             $table->boolean('is_approved')->default(1);
             $table->string('extra_tags')->nullable();
+            $table->string('extra_images')->nullable();
             $table->timestamps();
         });
     }

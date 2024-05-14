@@ -8,6 +8,7 @@ use Filament\Tables;
 use App\Models\Product;
 use Filament\Forms\Set;
 use Filament\Forms\Form;
+use App\Models\Subdomain;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Resources\Resource;
@@ -27,6 +28,7 @@ use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\ProductResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ProductResource extends Resource
 {
@@ -61,42 +63,82 @@ class ProductResource extends Resource
                                                 ->columnSpan('full')
                                 ])->columns(2),
 
+                        Section::make('Pricing')
+                                ->schema([
+                                    TextInput::make('price')
+                                            ->prefix('₦')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->required(),
+
+                                    TextInput::make('cost')
+                                            ->label('Cost per item')
+                                            ->prefix('₦')
+                                            ->minValue(1)
+                                            ->helperText('Customers won\'t see this price.')
+                                            ->numeric(),
+
+                                    TextInput::make('discount')
+                                            ->label('Discount Price')
+                                            ->minValue(1)
+                                            ->numeric()
+                                            ->prefix('₦')
+                                            ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/'])
+
+
+                                ])->columns(2),
+
                         Section::make('Image')
                                     ->schema([
                                         FileUpload::make('image')
                                                 ->image()
-                                                ->imageEditor(),
+                                                ->imageEditor()
+                                                ->directory('products')
+                                                ->preserveFilenames()
+                                                ->downloadable()
+                                                ->openable()
+                                                ->getUploadedFileNameForStorageUsing(
+                                                    fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+                                                        ->prepend(Subdomain::where('user_id', auth()->id())->value('name') . '-'),
+                                                )
+                                                ->maxSize(512),
                                     ])
                                     ->collapsible(),
-
-                        Section::make('Pricing')
+                        Section::make('Mutiple Images')
                                     ->schema([
-                                        TextInput::make('price')
-                                                ->prefix('₦')
-                                                ->numeric()
-                                                ->minValue(1)
-                                                ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/'])
-                                                ->required(),
+                                        FileUpload::make('extra_images')
+                                                ->label('Extra Images')
+                                                ->helperText('Upload extra multiple image of your product')
+                                                ->image()
+                                                ->imageEditor()
+                                                ->multiple()
+                                                ->reorderable()
+                                                ->appendFiles()
+                                                ->directory('products')
+                                                ->preserveFilenames()
+                                                ->downloadable()
+                                                ->openable()
+                                                ->getUploadedFileNameForStorageUsing(
+                                                    fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+                                                        ->prepend(Subdomain::where('user_id', auth()->id())->value('name') . '-'),
+                                                )
+                                                ->maxSize(512)
+                                                ->maxFiles(5)
+                                                ->columns(2),
+                                    ])
+                                    ->collapsible(),
+                    ])->columnSpan(['lg' => 2]),
 
-                                        TextInput::make('cost')
-                                                ->label('Cost per item')
-                                                ->prefix('₦')
-                                                ->minValue(1)
-                                                ->helperText('Customers won\'t see this price.')
-                                                ->numeric()
-                                                ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/']),
-
-                                        TextInput::make('discount')
-                                                ->label('Discount Price')
-                                                ->minValue(1)
-                                                ->numeric()
-                                                ->prefix('₦')
-                                                ->rules(['regex:/^\d{1,6}(\.\d{0,2})?$/'])
-
-
-                                    ])->columns(2),
-
-                        Section::make('Attributes')
+                    Group::make()
+                        ->schema([
+                            Section::make('Status')
+                                    ->schema([
+                                        Toggle::make('is_visible')
+                                                ->label('Visible')
+                                                ->helperText('Choose to show or hide this product from your customers.')
+                                                ->default(true),
+                                    ]),
+                            Section::make('Attributes')
                                     ->schema([
                                         TextInput::make('quantity')
                                             ->label('Quantity of products in stock.')
@@ -115,17 +157,6 @@ class ProductResource extends Resource
                                                 'ltr' => 'Litre (ltr)',
                                                 'g' => 'Gram (g)',
                                             ]),
-                                    ])->columns(2),
-                    ])->columnSpan(['lg' => 2]),
-
-                    Group::make()
-                        ->schema([
-                            Section::make('Status')
-                                    ->schema([
-                                        Toggle::make('is_visible')
-                                                ->label('Visible')
-                                                ->helperText('Choose to show or hide this product from your customers.')
-                                                ->default(true),
                                     ]),
                             Section::make('Association')
                                     ->schema([
@@ -146,7 +177,6 @@ class ProductResource extends Resource
 
                                         TagsInput::make('extra_tags')
                                                 ->label('Extra Tags')
-                                                ->separator(',')
                                                 ->helperText('Click Enter after inputting your tag,')
                                     ]),
                         ])->columnSpan(['lg' => 1]),
@@ -163,15 +193,18 @@ class ProductResource extends Resource
                             ->searchable(),
                 TextColumn::make('category.name')
                             ->sortable()
-                            ->searchable(),
+                            ->searchable()
+                            ->toggleable(),
                 TextColumn::make('slug')
                             ->toggleable()
                             ->sortable()
                             ->toggledHiddenByDefault(),
                 TextColumn::make('price')
+                            ->numeric(decimalPlaces:2)
                             ->prefix('₦')
                             ->sortable(),
                 TextColumn::make('discount')
+                            ->numeric(decimalPlaces:2)
                             ->prefix('₦')
                             ->sortable()
                             ->toggleable()
