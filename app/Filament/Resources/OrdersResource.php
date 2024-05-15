@@ -6,6 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Order;
 use Filament\Forms\Form;
+use App\Enums\OrderStatus;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
@@ -15,6 +16,7 @@ use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\OrdersResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\OrdersResource\RelationManagers;
@@ -113,9 +115,20 @@ class OrdersResource extends Resource
 
             ToggleButtons::make('status')
                         ->inline()
+                        ->options(OrderStatus::class),
+            
+            Select::make('payment_status')
+                        ->required()
                         ->options([
-                            
-                        ]),
+                            'paid' => 'Paid',
+                            'pending' => 'Pending',
+                            'declined' => 'Declined'
+                        ])
+                        ->native(false),
+
+            MarkdownEditor::make('description')
+                        ->label('Notes')
+                        ->columnSpan('full'),
         ];
     }
 
