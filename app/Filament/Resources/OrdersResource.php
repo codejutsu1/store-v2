@@ -2,16 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrdersResource\Pages;
-use App\Filament\Resources\OrdersResource\RelationManagers;
-use App\Models\Orders;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Order;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Actions\Action;
+use App\Filament\Resources\OrdersResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\OrdersResource\RelationManagers;
 
 class OrdersResource extends Resource
 {
@@ -27,7 +33,9 @@ class OrdersResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Section::make()
+                        ->schema(static::getDetailsFormSchema())
+                        ->columns(2),
             ]);
     }
 
@@ -64,5 +72,58 @@ class OrdersResource extends Resource
             'create' => Pages\CreateOrders::route('/create'),
             'edit' => Pages\EditOrders::route('/{record}/edit'),
         ];
+    }
+
+    public static function getDetailsFormSchema(): array
+    {
+        return [
+            TextInput::make('orderId')
+                    ->label('Order ID')
+                    ->default('OR-'.mt_rand(100000, 999999))
+                    ->disabled()
+                    ->dehydrated()
+                    ->required()
+                    ->unique(Order::class, 'orderId', ignoreRecord:true),
+
+            Select::make('user_id')
+                        ->relationship('user', 'name')
+                        ->searchable()
+                        ->required()
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                            TextInput::make('email')
+                                    ->label('Email Address')
+                                    ->required()
+                                    ->email()
+                                    ->maxLength(255)
+                                    ->unique(),
+                            TextInput::make('password')
+                                    ->required()
+                                    ->password()
+                                    ->revealable()
+                        ])
+                        ->createOptionAction(function (Action $action) {
+                            return $action
+                                ->modalHeading('Create customer')
+                                ->modalSubmitActionLabel('Create customer')
+                                ->modalWidth('lg');
+                        }),
+
+            ToggleButtons::make('status')
+                        ->inline()
+                        ->options([
+                            
+                        ]),
+        ];
+    }
+
+    public static function getItemsRepeater(): Repeater
+    {
+        return Repeater::make('Products')
+                        ->schema([
+
+                        ]);
     }
 }

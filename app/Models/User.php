@@ -49,4 +49,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Subdomain::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
