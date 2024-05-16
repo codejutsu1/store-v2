@@ -5,16 +5,21 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Order;
+use App\Models\Product;
+use Filament\Forms\Set;
 use Filament\Forms\Form;
 use App\Enums\OrderStatus;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Filament\Tables\Grouping\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\OrdersResource\Pages;
@@ -45,7 +50,24 @@ class OrdersResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('orderId')
+                            ->label('Order ID')
+                            ->searchable()
+                            ->sortable(),
+                TextColumn::make('user.name')
+                            ->label('Customer')
+                            ->searchable()
+                            ->sortable(),
+                TextColumn::make('total_price')
+                            ->summarize([
+                                Sum::make()->money(),
+                            ]),
+                TextColumn::make('status')
+                            ->badge(),
+                TextColumn::make('created_at')
+                            ->label('Order Date')
+                            ->date()
+                            ->toggleable(),
             ])
             ->filters([
                 //
@@ -57,6 +79,12 @@ class OrdersResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ])
+            ->groups([
+                Group::make('created_at')
+                    ->label('Order Date')
+                    ->date()
+                    ->collapsible(),
             ]);
     }
 
@@ -82,9 +110,9 @@ class OrdersResource extends Resource
             TextInput::make('orderId')
                     ->label('Order ID')
                     ->default('OR-'.mt_rand(100000, 999999))
+                    ->required()
                     ->disabled()
                     ->dehydrated()
-                    ->required()
                     ->unique(Order::class, 'orderId', ignoreRecord:true),
 
             Select::make('user_id')
@@ -115,6 +143,7 @@ class OrdersResource extends Resource
 
             ToggleButtons::make('status')
                         ->inline()
+                        ->required()
                         ->options(OrderStatus::class),
             
             Select::make('payment_status')
@@ -134,9 +163,48 @@ class OrdersResource extends Resource
 
     public static function getItemsRepeater(): Repeater
     {
-        return Repeater::make('Products')
+        return Repeater::make('orderProducts')
+                        ->relationship()
                         ->schema([
+                            Select::make('product_id')
+                                    ->label('Product')
+                                    ->options(Product::query()->pluck('name', 'id'))
+                                    ->native(false)
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, Set $set) => $set('price', Product::find($state)?->price ?? 0))
+                                    ->distinct()
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                    ->columnSpan([
+                                        'md' => 5,
+                                    ])
+                                    ->searchable(),
 
-                        ]);
+                            TextInput::make('qty')
+                                    ->label('Quantity')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->columnSpan([
+                                        'md' => 2,
+                                    ])
+                                    ->required(),
+
+                            TextInput::make('price')
+                                    ->label('Unit Price')
+                                    ->disabled()
+                                    ->prefix('₦')
+                                    ->dehydrated()
+                                    ->numeric()
+                                    ->required()
+                                    ->columnSpan([
+                                        'md' => 3,
+                                    ]),
+
+                        ])
+                        ->defaultItems(1)
+                        ->hiddenLabel()
+                        ->columns([
+                            'md' => 10,
+                        ])
+                        ->required();
     }
 }
